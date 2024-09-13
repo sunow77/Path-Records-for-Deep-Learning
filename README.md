@@ -33,7 +33,11 @@
 
   CS50p用的是VScode编译器（类似），我用Jupyter，很多东西无法实现，比如command-line和test。
 
-- 过了一遍[**CS50x**](https://learning.edx.org/course/course-v1:HarvardX+CS50+X/home)的Week00~05的Lecture部分，主要是借用C学习计算机底层的运转方式，过到Week06
+- 过了一遍[**CS50x**](https://learning.edx.org/course/course-v1:HarvardX+CS50+X/home)的Week00~05的Lecture部分，主要是借用C学习计算机底层的运转方式，过到Week06，C这部分没有写作业，Week06跟着写了，相当于简单地review了一下CS50p
 
   不晓得为什么，字幕突然变成了暗灰色，我根本看不清楚，只能看旁边的transcripts，不太习惯。后面是AI还有其他语言编程，暂时停一停。
+  
 - 因为教程涉及到GitHub，今天来创建第一个代码库、重新捡起Markdown（当日记用……）
+
+
+**关于只是这种程度学习python的总结**：只需要跟着CS50p+CS50x就好了，且过程需要记笔记+一定一定要写作业，其他因为缺乏practice学习效果不太好
