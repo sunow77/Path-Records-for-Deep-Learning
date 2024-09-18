@@ -16,7 +16,7 @@
 
   
 
-## 目前进展 （2024/9/13）
+## 2024/09/13 目前进展
 
 ### 工具：Jupyter Notebook
 ​        安装Anaconda后搞虚拟环境+配Kernel搞了蛮久，总是不确定自己做得对不对，我在CSDN上翻了很久才搞定，搞定后发现ChatGPT在这个领域实在很有帮助……
@@ -41,3 +41,10 @@
 
 
 **关于只是这种程度学习python的总结**：只需要跟着CS50p+CS50x就好了，且过程需要记笔记+写作业，其他因为缺乏practice学习效果不太好
+## 2024/09/18 读了本书，提供一下学习深度学习的思路
+- **Meta learning: How To Learn Deep Learning And Thrive In The Digital World** by Radek Osmulski
+  [英文版本](https://annas-archive.org/md5/e952ddc8e6d57147fd2a4fad02513b26)  [中文版本（似乎是机翻)](https://note.youdao.com/ynoteshare/index.html?id=28ddb4ed0cd3457f2d0bb0529fa902e4&type=note&_time=1720776149418)
+  
+- *这本书只是提供学习路径，并不提供任何深度学习有关的知识，甚至没有相关知识读起来会有些困难，因为他会提到一些训练process，不可避免地会用到专业名字。我读起来部分地方无法理解，但我觉得蛮提供思路的*
+  
+  
