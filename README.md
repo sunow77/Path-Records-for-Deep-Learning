@@ -47,7 +47,7 @@
 
 ## 2024/09/18 读了本书，提供一下学习深度学习的思路
 - **Meta learning: How To Learn Deep Learning And Thrive In The Digital World** by Radek Osmulski
-  [英文版本](https://annas-archive.org/md5/e952ddc8e6d57147fd2a4fad02513b26)  [中文版本（似乎是机翻)](https://note.youdao.com/ynoteshare/index.html?id=28ddb4ed0cd3457f2d0bb0529fa902e4&type=note&_time=1720776149418)
+  [英文版本](https://annas-archive.org/md5/e952ddc8e6d57147fd2a4fad02513b26)    [中文版本（似乎是机翻)](https://note.youdao.com/ynoteshare/index.html?id=28ddb4ed0cd3457f2d0bb0529fa902e4&type=note&_time=1720776149418)    [个人笔记（仅供参考）]()
   
 - *这本书只是提供学习路径，并不提供任何深度学习有关的知识，甚至没有相关知识读起来会有些困难，因为他会提到一些训练process，不可避免地会用到专业名字。我读起来部分地方无法理解，但我觉得蛮提供思路的。*
   
