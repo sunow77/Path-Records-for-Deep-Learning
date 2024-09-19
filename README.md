@@ -39,8 +39,14 @@
   
 - 因为教程涉及到GitHub，今天来创建第一个代码库、重新捡起Markdown（当日记用……）
 
+  [^zheshi]: 这有什么用？
+
+  
 
 **关于只是这种程度学习python的总结**：只需要跟着CS50p+CS50x就好了，且过程需要记笔记+写作业，其他因为缺乏practice学习效果不太好
+
+
+
 ## 2024/09/18 读了本书，提供一下学习深度学习的思路
 - **Meta learning: How To Learn Deep Learning And Thrive In The Digital World** by Radek Osmulski
   [英文版本](https://annas-archive.org/md5/e952ddc8e6d57147fd2a4fad02513b26)  [中文版本（似乎是机翻)](https://note.youdao.com/ynoteshare/index.html?id=28ddb4ed0cd3457f2d0bb0529fa902e4&type=note&_time=1720776149418)
