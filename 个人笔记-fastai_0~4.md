@@ -14,7 +14,10 @@
 |[Deep Learning for Coders with fastai and PyTorch: AI Applications Without a PhD]([Deep Learning for Coders with fastai and PyTorch: AI Applications Without a PhD: Howard, Jeremy, Gugger, Sylvain: 9781492045526: Amazon.com: Books](https://www.amazon.com/Deep-Learning-Coders-fastai-PyTorch/dp/1492045527))|-|一本书，[免费]([Practical Deep Learning for Coders - The book](https://course.fast.ai/Resources/book.html))|
 |[new fast.ai course: A Code-First Introduction to Natural Language Processing – fast.ai](https://www.fast.ai/posts/2019-07-08-fastai-nlp.html)|-|其他类型课程|
 
+
+
 ## [Practical Deep Learning 2022](https://course.fast.ai/) & [Fastbook](https://github.com/fastai/fastbook)
+
 ### 1: Getting started (PDL2022)
 
 #### *Is it a bird? Creating a model from your own data*
@@ -63,7 +66,7 @@
   import time '鉴于效率非常重要，因此要记录time'
   ```
 
-### 1: intro (fastbook)
+### 1: intro (fastbook1)
 
 #### 1.1 初学
 
@@ -277,13 +280,13 @@ stacked_threes = torch.stack(three_tensors).float()/255
 stacked_threes.shape #torch.Size([6131, 28, 28])
 len(stacked_sevens.shape) #张量的秩，也就是张量的维度
 
-mean3 = stacked_threes.mean(0) #沿着维度0求平均值
+mean3 = stacked_threes.mean(0) #沿着维度0求平均值，变成2-rank
 show_image(mean3)
 mean7 = stacked_sevens.mean(0)
 
-a_3 = stacked_threes[1] #float
+a_3 = stacked_threes[1] #float，第一张图
 F.l1_loss(a_3, mean7) #l1是标准数学术语平均绝对值的缩写（在数学中称为L1 范数）
-F.mse_loss(a_3, mean7).sqrt() #mse均方误差，sqrt()开根，RMSE是L2范数
+F.mse_loss(a_3, mean7).sqrt() #mse均方误差，sqrt()开根，RMSE均方根误差是L2范数
 #MSE相比L1范数来说会更狠地惩罚大的误差，而对小误差更加宽容
 ```
 
@@ -291,7 +294,7 @@ F.mse_loss(a_3, mean7).sqrt() #mse均方误差，sqrt()开根，RMSE是L2范数
 
 * [NumPy](https://numpy.org) 是 Python 中用于科学和数值编程最广泛使用的库。它提供了类似的功能和类似的 API，与 PyTorch 提供的功能相似；然而，它不支持使用 GPU 或计算梯度，这两者对于深度学习都是至关重要的。
 
-| #    | Numpy                                          | Pytorch                               |
+| #    | Numpy                                          | Pytorch Tensor                        |
 | ---- | ---------------------------------------------- | ------------------------------------- |
 | 1    | 不规则数组：可以是数组的数组，内部数组大小不同 | 不可以是不规则的                      |
 | 2    | 不能存在GPU上                                  | 可以存储在GPU上，后续训练更快         |
@@ -376,7 +379,7 @@ def apply_step(params, prn=True):
     return params
 
 #循环
-while loss<3:
+while loss>3:
     apply_step(params)
 ```
 
@@ -693,7 +696,7 @@ learn.fit(10,lr=lr)
 
 ```python
 #前面如上一个实例
-#构建一个多层神经网络
+#构建一个多层神经网络（2层=1个隐藏层+1个全连接层）
 simple_net = nn.Sequential(
     nn.Linear(28*28,30),
     nn.ReLU(),
