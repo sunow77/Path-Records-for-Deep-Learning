@@ -1207,16 +1207,16 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 df = pd.read_csv(path/'TrainAndValid.csv', low_memory=False)
 df.columns
 #一些分类数据可能做的整理
-df.ProductSize.unique()
+df.ProductSize.unique() #查看都有什么值
 sizes = 'Large','Large / Medium','Medium','Small','Mini','Compact'
-df['ProductSize'] = df['ProductSize'].astype('category')
-df['ProductSize'] = df['ProductSize'].cat.set_categories(sizes, ordered=True)
-df.ProductSize.unique()
+df['ProductSize'] = df['ProductSize'].astype('category') #转换成pandas的分类类型
+df['ProductSize'] = df['ProductSize'].cat.set_categories(sizes, ordered=True) #排序
+df.ProductSize.unique() #排好序了
 #因变量
 df['SalePrice']=np.log(df['SalePrice'])
 
 #日期类数据的处理
-df = add_datepart(df, 'saledate')
+df = add_datepart(df, 'saledate') #将saledate转换成各种日期表达
 df_test = pd.read_csv(path/'Test.csv', low_memory=False)
 df_test = add_datepart(df_test, 'saledate')
 ' '.join(o for o in df.columns if o.startswith('sale'))
@@ -1252,8 +1252,8 @@ splits = (list(train_idx),list(valid_idx))
 #识别一些连续自变量、分类自变量和因变量，并使得它们具有数字是属性
 procs = [Categorify, FillMissing]
 dep_var = 'SalePrice'
-cont,cat = cont_cat_split(df, 1, dep_var=dep_var) #cont返回连续自变量的title
-to = TabularPandas(df, procs, cat, cont, y_names=dep_var, splits=splits)
+cont,cat = cont_cat_split(df, 1, dep_var=dep_var) #cont返回的是连续自变量的特征名
+to = TabularPandas(df, procs, cat, cont, y_names=dep_var, splits=splits) #拆分成train和valid了
 #len(to.train),len(to.valid)
 #to.show(3) #可以看到to没有saledate，变成了很多日期拆分；saleprice在最后
 #to.items.head(3) #变量都不是字符串了，而是数字
@@ -1384,10 +1384,10 @@ def rf(xs, y, n_estimators=40, max_samples=200_000,
         max_samples=max_samples, max_features=max_features,
         min_samples_leaf=min_samples_leaf, oob_score=True).fit(xs, y)
 # 并行使用所有 CPU 核心加速训练
-# 树的数量
-# 每棵树用的样本量
-# 每次分裂考虑的最大特征比例
-# 最小叶子样本数
+# 树的数量=40
+# 每棵树用的样本量=200000
+# 每次分裂考虑的最大特征比例=0.5
+# 最小叶子样本数=5
 # 启用 OOB 估计，用于模型评估
 m = rf(xs, y);
 m_rmse(m, xs, y), m_rmse(m, valid_xs, valid_y)
@@ -1470,7 +1470,7 @@ plot_fi(fi[:30]);
 
 特征重要性的计算：
 
-- 基于节点纯度增益（Gini impurity / MSE 减少）（这是 Scikit-learn 中默认的方法）
+- 基于节点纯度增益（Gini impurity / MSE 减少）（这是 Scikit-learn 中默认的方法，上图）
 
   如果一个特征在分裂节点时带来了较大的纯度提升（分类任务）或方差减少（回归任务），说明它对模型更重要。
 
@@ -1551,7 +1551,7 @@ def get_oob(df):
     m = RandomForestRegressor(n_estimators=40, min_samples_leaf=15,
         max_samples=50000, max_features=0.5, n_jobs=-1, oob_score=True)
     m.fit(df, y)
-    return m.oob_score_  #对拟合随机森林来说，obb_score_是R²
+    return m.oob_score_  #对拟合随机森林来说，obb_score_是R²决定系数，越接近1越好
 get_oob(xs_imp) #基线
 '0.8761015614269996'
 {c:get_oob(xs_imp.drop(c, axis=1)) for c in (
@@ -1611,7 +1611,9 @@ from sklearn.inspection import PartialDependenceDisplay
 PartialDependenceDisplay.from_estimator(m,valid_xs_final,features=['YearMade','ProductSize'],kind='average').figure_.set_size_inches(12,4)
 ```
 
-ProductSize的部分图有点令人担忧。它显示我们看到的最终组，即缺失值，价格最低。要在实践中使用这一见解，我们需要找出为什么它经常缺失以及这意味着什么。缺失值有时可以是有用的预测因子-这完全取决于导致它们缺失的原因。然而，有时它们可能表明数据泄漏。
+![](D:\Git\a\Path-Records\img\dlcf_09in10.png)
+
+YearMade还是蛮合理的，90年后才是数据主要集中的位置，比较符合常识；ProductSize的部分图有点令人担忧。它显示我们看到的最终组，即缺失值，价格最低。要在实践中使用这一见解，我们需要找出为什么它经常缺失以及这意味着什么。缺失值有时可以是有用的预测因子-这完全取决于导致它们缺失的原因。然而，有时它们可能表明数据泄漏。
 
 - **数据泄露**
 
@@ -1629,5 +1631,277 @@ ProductSize的部分图有点令人担忧。它显示我们看到的最终组，
 
 它还可以帮助您确定哪些因素影响特定预测，使用树解释器。
 
-##### （7）树解释器
+#### 5.6.4 树解释器
+
+对于预测特定数据行，最重要的因素是什么，它们如何影响该预测？我们需要使用*treeinterpreter*库。我们还将使用*waterfallcharts*库来绘制结果图表。
+
+假设我们正在查看拍卖中的特定物品。我们的模型可能预测这个物品会非常昂贵，我们想知道原因。因此，我们取出那一行数据并将其通过第一棵决策树，查看树中每个点处使用的分割。对于每个分割，我们找到相对于树的父节点的增加或减少。我们对每棵树都这样做，并将每个分割变量的重要性变化相加。
+
+- 首先计算contributions，其实就是有个基础值bias，特征1增加x1，特征2增加x2...最后加在一起得到prediction
+
+```python
+!pip install treeinterpreter
+from treeinterpreter import treeinterpreter
+row = valid_xs_final.iloc[:5]
+prediction,bias,contributions = treeinterpreter.predict(m, row.values)
+#prediction只是随机森林的预测。bias是模型预测的基础值，也就是模型在没有任何特征信息时的平均预测值
+#contributions：它告诉我们由于每个独立变量的变化而导致的预测总变化
+#对于某一行，contributions+bias=prediction
+```
+
+- 那么每个特征使得prediction发生了怎样的变化呢？画瀑布图
+
+```python
+import plotly.graph_objects as go
+fig = go.Figure(go.Waterfall(
+    name = "aaaaa", orientation = "v",
+    x = valid_xs_final.columns,
+    textposition = "outside",
+    increasing=dict(marker=dict(color="#4C72B0")),   # 蓝色：增加
+    decreasing=dict(marker=dict(color="#DD8452")),   # 橙棕色：减少
+    totals=dict(marker=dict(color="#6C757D")),
+    text = contributions[0].round(3),
+    y = contributions[0],
+    connector = {"line":{"color":"black", "width":1}}
+))
+fig.add_shape(
+    type='line',
+    x0=0, x1=1, xref='paper',
+    y0=0.08, y1=0.08,
+    line=dict(color='gray', dash='dash')
+)
+fig.update_layout(
+    #title="瀑布图",
+    #xanchor='center',
+    #title_font=dict(size=14, family="DejaVu Sans", color='black'),
+    #font=dict(size=12, family="DejaVu Sans", color='black'),
+    plot_bgcolor='white',
+    showlegend=False,
+    paper_bgcolor='white'
+)
+fig.update_xaxes(
+    #title_text="特征",
+    title_font=dict(size=12),
+    tickfont=dict(size=10),
+    showline=True,
+    linewidth=1,
+    linecolor='black')
+fig.update_yaxes(title_text="Contribution to Prediction",
+    title_font=dict(size=12),
+    tickfont=dict(size=10),
+    showline=True,
+    linewidth=1,
+    linecolor='black',
+    zeroline=True,
+    zerolinecolor='gray',
+    zerolinewidth=0.5,
+    range=[-0.5, 0.1])
+fig.show()
+```
+
+![](D:\Git\a\Path-Records\img\dlcf_09in11.png)
+
+这种信息在生产中最有用，而不是在模型开发过程中。您可以使用它为数据产品的用户提供有关预测背后的基本推理的有用信息。
+
+### 5.7 外推和神经网络
+
+#### 5.7.1 外推问题
+
+![](D:\Git\a\Path-Records\img\dlcf_09in13.png)
+
+如图，用前面部分做随机森林预测后面部分，就会发现有很大的问题，这就是随机森林无法对其未见过的数据类型进行外推。这就是为什么我们需要确保我们的验证集不包含域外数据。
+
+#### 5.7.2 查找域外数据
+
+我们尝试预测一行是在验证集还是训练集中，来验证测试集是否与训练数据以相同方式分布。
+
+```python
+df_dom = pd.concat([xs_final, valid_xs_final])
+is_valid = np.array([0]*len(xs_final) + [1]*len(valid_xs_final))
+m = rf(df_dom, is_valid)
+rf_feat_importance(m, df_dom)
+```
+
+|      | cols        | imp      |
+| ---- | ----------- | -------- |
+| 5    | saleElapsed | 0.859446 |
+| 9    | SalesID     | 0.119325 |
+| 13   | MachineID   | 0.014259 |
+| 0    | YearMade    | 0.001793 |
+| 8    | fiModelDesc | 0.001740 |
+| 11   | Enclosure   | 0.000657 |
+
+这显示训练集和验证集之间有三列显着不同：saleElapsed、SalesID 和 MachineID。现在依次将它们去掉，看看对模型的影响：
+
+```python
+m = rf(xs_final, y)
+print('orig', m_rmse(m, valid_xs_final, valid_y))
+for c in ('SalesID','saleElapsed','MachineID'):
+    m = rf(xs_final.drop(c,axis=1), y)
+    print(c, m_rmse(m, valid_xs_final.drop(c,axis=1), valid_y))
+'''
+orig 0.23322
+SalesID 0.230832
+saleElapsed 0.236452
+MachineID 0.231546
+'''
+```
+
+去掉SalesID和MachineID，重新训练模型：
+
+```python
+time_vars = ['SalesID','MachineID']
+xs_final_time = xs_final.drop(time_vars, axis=1)
+valid_xs_time = valid_xs_final.drop(time_vars, axis=1)
+m = rf(xs_final_time, y)
+m_rmse(m, valid_xs_time, valid_y)
+'0.231307模型表现提高了'
+```
+
+- 我们建议对所有数据集尝试构建一个以 is_valid 为因变量的模型，就像我们在这里所做的那样。它通常可以揭示您可能会忽略的微妙的领域转移问题。
+
+- 除此之外，我们可以尝试不使用旧数据，以免时代变化导致预测不同：这表明您不应该总是使用整个数据集；有时候子集可能更好。
+
+```python
+filt = xs['saleYear']>2004
+xs_filt = xs_final_time[filt]
+y_filt = y[filt]
+m = rf(xs_filt, y_filt)
+m_rmse(m, xs_filt, y_filt), m_rmse(m, valid_xs_time, valid_y)
+'(0.177078, 0.229417)，相比于去除共线性之后(0.182724, 0.233131)；在去除共线特征前是(0.180774, 0.230802)；用所有特征的结果(0.170992, 0.233527)提高且输入更少了'
+```
+
+#### 5.7.3 使用神经网络
+
+在神经网络中，处理分类变量的一个很好的方法是使用嵌入。为了创建嵌入，fastai 需要确定哪些列应该被视为分类变量。嵌入大小大于 10,000 通常只应在测试是否有更好的方法来分组变量之后使用，因此我们将使用 9,000 作为我们的 max_card 值。
+
+```python
+#数据准备
+df_nn = pd.read_csv(path/'TrainAndValid.csv', low_memory=False)
+df_nn['ProductSize'] = df_nn['ProductSize'].astype('category')
+df_nn['ProductSize'] = df_nn['ProductSize'].cat.set_categories(sizes, ordered=True)
+df_nn[dep_var] = np.log(df_nn[dep_var])
+df_nn = add_datepart(df_nn, 'saledate')
+df_nn_final = df_nn[list(xs_final_time.columns) + [dep_var]]
+cont_nn,cat_nn = cont_cat_split(df_nn_final, max_card=9000, dep_var=dep_var)
+#max_card最大分类数（cardinality），fastai 默认是 20，超过这个值就认为是连续变量，这里设置为 9000 表示几乎不限制
+#双保险，saleElapsed一定不能是分类变量，要将它作为连续变量
+#cont_nn.append('saleElapsed')
+#cat_nn.remove('saleElapsed')
+df_nn_final[cat_nn].nunique() #唯一值的个数
+'''
+YearMade                73
+ProductSize              6
+Coupler_System           2
+fiProductClassDesc      74
+ModelID               5281
+fiSecondaryDesc        177
+Hydraulics_Flow          3
+fiModelDesc           5059
+Enclosure                6
+ProductGroup             6
+fiModelDescriptor      140
+Hydraulics              12
+Tire_Size               17
+Drive_System             4
+dtype: int64
+ModelID和fiModelDesc可能相似冗余，删除其中一个看对随机森林的影响
+'''
+xs_filt2 = xs_filt.drop('fiModelDescriptor', axis=1)
+valid_xs_time2 = valid_xs_time.drop('fiModelDescriptor', axis=1)
+m2 = rf(xs_filt2, y_filt)
+m_rmse(m2, xs_filt2, y_filt), m_rmse(m2, valid_xs_time2, valid_y)
+cat_nn.remove('fiModelDescriptor')
+'不知道为啥最后是fiModelDescriptor，(0.178941, 0.23032)，和之前(0.177078, 0.229417)差异不大，可以把它去掉'
+procs_nn = [Categorify, FillMissing, Normalize]
+to_nn = TabularPandas(df_nn_final, procs_nn, cat_nn, cont_nn,
+                      splits=splits, y_names=dep_var)
+dls = to_nn.dataloaders(1024)
+```
+
+这段是对比而已
+
+```python
+#随机森林
+procs = [Categorify, FillMissing]
+dep_var = 'SalePrice'
+cont,cat = cont_cat_split(df, 1, dep_var=dep_var) #cont返回的是连续自变量的特征名
+to = TabularPandas(df, procs, cat, cont, y_names=dep_var, splits=splits) #拆分成train和valid了
+#神经网络
+procs_nn = [Categorify, FillMissing, Normalize]
+cont_nn,cat_nn = cont_cat_split(df_nn_final, max_card=9000, dep_var=dep_var)
+to_nn = TabularPandas(df_nn_final, procs_nn, cat_nn, cont_nn, splits=splits, y_names=dep_var)
+dls = to_nn.dataloaders(1024)
+```
+
+正如我们讨论过的，为回归模型设置y_range是一个好主意，所以让我们找到我们因变量的最小值和最大值
+
+```python
+y = to_nn.train.y
+y.min(),y.max()
+'(8.465899467468262, 11.863582611083984)'
+from fastai.tabular.all import *
+learn = tabular_learner(dls, y_range=(8,12), layers=[500,250], n_out=1, loss_func=F.mse_loss)
+learn.lr_find()
+'SuggestedLRs(valley=0.0014454397605732083)'
+```
+
+![](D:\Git\a\Path-Records\img\dlcf_09in14.png)
+
+```python
+learn.fit_one_cycle(5, 1e-2)
+preds,targs = learn.get_preds()
+r_mse(preds,targs)
+'0.22728,对比随机森林(0.178941, 0.23032)，好一些'
+learn.save('nn')
+```
+
+### 5.8 提高模型表现的方法
+
+#### 5.8.1 集成Ensembling
+
+在我们的情况下，我们有两个非常不同的模型，使用非常不同的算法进行训练：一个是随机森林，一个是神经网络。可以合理地期望每个模型产生的错误类型会有很大不同。因此，我们可能会期望它们的预测平均值会比任何一个单独的预测都要好。
+
+```python
+rf_preds = m.predict(valid_xs_time)
+ens_preds = (to_np(preds.squeeze()) + rf_preds) /2
+r_mse(ens_preds,valid_y)
+'0.22291'
+```
+
+#### 5.8.2 提升Boosting
+
+我们添加模型而不是对它们进行平均。以下是提升的工作原理：
+
+1.  训练一个欠拟合数据集的小模型。
+
+1.  计算该模型在训练集中的预测。
+
+1.  从目标中减去预测值；这些被称为*残差*，代表了训练集中每个点的误差。
+
+1.  回到第 1 步，但是不要使用原始目标，而是使用残差作为训练的目标。
+
+1.  继续这样做，直到达到停止标准，比如最大树的数量，或者观察到验证集错误变得更糟。
+
+使用提升树集成进行预测，我们计算每棵树的预测，然后将它们全部加在一起。有许多遵循这种基本方法的模型，以及许多相同模型的名称。梯度提升机（GBMs）和梯度提升决策树（GBDTs）是您最有可能遇到的术语，或者您可能会看到实现这些模型的特定库的名称；在撰写本文时，**XGBoost (eXtreme Gradient Boosting)**是最受欢迎的。
+
+但要注意的是，在随机森林中更多树可以降低过拟合风险，但在提升集成中，拥有更多树，训练错误就会变得更好，最终您将在验证集上看到过拟合。
+
+#### 5.8.3 神经网络学习的嵌入
+
+我们在本章开头提到的实体嵌入论文的摘要中指出：“从训练的神经网络中获得的嵌入在作为输入特征时显著提高了所有测试的机器学习方法的性能。”
+
+![](D:\Git\a\Path-Records\img\dlcf_0908.png)
+
+这些嵌入甚至不需要为组织中的每个模型或任务单独学习。相反，一旦为特定任务的列学习了一组嵌入，它们可以存储在一个中心位置，并在多个模型中重复使用。实际上，我们从与其他大公司的从业者的私下交流中得知，这在许多地方已经发生了。
+
+### 5.9 结论
+
++   *随机森林*是最容易训练的，因为它们对超参数选择非常有韧性，需要很少的预处理。它们训练速度快，如果有足够的树，就不会过拟合。但是它们可能会稍微不够准确，特别是在需要外推的情况下，比如预测未来的时间段。
+
++   梯度提升机理论上训练速度与随机森林一样快，但实际上您将不得不尝试很多超参数。它们可能会过拟合，但通常比随机森林稍微准确一些。
+
++   *神经网络*需要最长的训练时间，并需要额外的预处理，比如归一化；这种归一化也需要在推断时使用。它们可以提供很好的结果并很好地外推，但只有在您小心处理超参数并注意避免过拟合时才能实现。
+
+## 6: Random Forests
 
